@@ -45,4 +45,6 @@ router.get("/:walletId/ledger", checkJwt, walletController.getWalletLedger);
 // URL Completa: POST /api/v1/wallets/compensate
 router.post("/compensate", checkJwt, walletController.compensateWallet);
 
+router.get('/:walletId', checkJwt, walletController.getWalletDetails);
+
 module.exports = router;

@@ -79,6 +79,29 @@ const getWalletBalance = async (req, res) => {
   }
 };
 
+const getWalletDetails = async (req, res) => {
+  const { walletId } = req.params;
+  const idAsNumber = parseInt(walletId, 10);
+
+  if (isNaN(idAsNumber)) {
+    return res.status(400).json({ error: "El walletId debe ser numérico." });
+  }
+
+  try {
+    // Llamamos al servicio que ya tienes creado
+    const wallet = await walletService.getWalletById(idAsNumber);
+
+    // Devolvemos la wallet completa (incluye user_id)
+    res.status(200).json(wallet);
+
+  } catch (error) {
+    if (error.message.includes('no encontrada')) {
+      return res.status(404).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // --- (Controlador de Crédito) ---
 const creditWallet = async (req, res) => {
 
@@ -284,4 +307,5 @@ module.exports = {
   debitWallet,
   getWalletLedger,
   compensateWallet,
+  getWalletDetails
 };
