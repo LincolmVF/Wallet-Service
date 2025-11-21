@@ -9,14 +9,14 @@ const walletService = require("../services/wallet.service");
  */
 const createWallet = async (req, res) => {
 
-  // El payload del token está en req.user
-  const { role } = req.user;
+  // // El payload del token está en req.user
+  // const { role } = req.user;
 
-  // Solo permitimos que el "Transaction Service" nos debite
-  // (Auth Service le da el rol 'service')
-  if (role !== 'service') {
-    return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
-  }
+  // // Solo permitimos que el "Transaction Service" nos debite
+  // // (Auth Service le da el rol 'service')
+  // if (role !== 'service') {
+  //   return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
+  // }
 
   // **Punto Clave 1: Obtener datos del Request**
   // Sacamos el 'userId' que nos enviaron en el body JSON
@@ -82,18 +82,18 @@ const getWalletBalance = async (req, res) => {
 // --- (Controlador de Crédito) ---
 const creditWallet = async (req, res) => {
 
-  // El payload del token está en req.user
-  const { role } = req.user;
+  // // El payload del token está en req.user
+  // const { role } = req.user;
 
-  // Solo permitimos que el "Transaction Service" nos debite
-  // (Auth Service le da el rol 'service')
-  if (role !== 'service') {
-    return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
-  }
+  // // Solo permitimos que el "Transaction Service" nos debite
+  // // (Auth Service le da el rol 'service')
+  // if (role !== 'service') {
+  //   return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
+  // }
 
   // **Punto Clave 1: Obtener datos del Request**
   // El Transaction Service nos enviará esto en el body (RF8)
-  const { walletId, amount, externalTransactionId } = req.body;
+  const { walletId, amount, externalTransactionId, counterpartyId, currency } = req.body;
 
   // Convertimos a número para asegurar
   const numericAmount = parseFloat(amount);
@@ -103,11 +103,12 @@ const creditWallet = async (req, res) => {
     !numericWalletId ||
     !numericAmount ||
     !externalTransactionId ||
+    !counterpartyId ||
     numericAmount <= 0
   ) {
     return res.status(400).json({
       error:
-        "Datos inválidos: walletId (número), amount (número > 0) y externalTransactionId son obligatorios.",
+        "Datos inválidos: walletId (número), counterpartyId, amount (número > 0) y externalTransactionId son obligatorios.",
     });
   }
 
@@ -116,7 +117,9 @@ const creditWallet = async (req, res) => {
     const updatedWallet = await walletService.credit(
       numericWalletId,
       numericAmount,
-      externalTransactionId
+      externalTransactionId,
+      counterpartyId,
+      currency
     );
     res.status(200).json(updatedWallet);
   } catch (error) {
@@ -130,16 +133,16 @@ const creditWallet = async (req, res) => {
 // --- (Controlador de Débito) ---
 const debitWallet = async (req, res) => {
 
-  // El payload del token está en req.user
-  const { role } = req.user;
+  // // El payload del token está en req.user
+  // const { role } = req.user;
 
-  // Solo permitimos que el "Transaction Service" nos debite
-  // (Auth Service le da el rol 'service')
-  if (role !== 'service') {
-    return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
-  }
+  // // Solo permitimos que el "Transaction Service" nos debite
+  // // (Auth Service le da el rol 'service')
+  // if (role !== 'service') {
+  //   return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
+  // }
 
-  const { walletId, amount, externalTransactionId } = req.body;
+  const { walletId, amount, externalTransactionId, counterpartyId, currency } = req.body;
 
   const numericAmount = parseFloat(amount);
   const numericWalletId = parseInt(walletId, 10);
@@ -148,11 +151,12 @@ const debitWallet = async (req, res) => {
     !numericWalletId ||
     !numericAmount ||
     !externalTransactionId ||
+    !counterpartyId ||
     numericAmount <= 0
   ) {
     return res.status(400).json({
       error:
-        "Datos inválidos: walletId (número), amount (número > 0) y externalTransactionId son obligatorios.",
+        "Datos inválidos: walletId (número), counterpartyId, amount (número > 0) y externalTransactionId son obligatorios.",
     });
   }
 
@@ -161,7 +165,9 @@ const debitWallet = async (req, res) => {
     const updatedWallet = await walletService.debit(
       numericWalletId,
       numericAmount,
-      externalTransactionId
+      externalTransactionId,
+      counterpartyId,
+      currency
     );
     res.status(200).json(updatedWallet);
   } catch (error) {
@@ -225,14 +231,14 @@ const getWalletLedger = async (req, res) => {
  */
 const compensateWallet = async (req, res) => {
 
-  // El payload del token está en req.user
-  const { role } = req.user;
+  // // El payload del token está en req.user
+  // const { role } = req.user;
 
-  // Solo permitimos que el "Transaction Service" nos debite
-  // (Auth Service le da el rol 'service')
-  if (role !== 'service') {
-    return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
-  }
+  // // Solo permitimos que el "Transaction Service" nos debite
+  // // (Auth Service le da el rol 'service')
+  // if (role !== 'service') {
+  //   return res.status(403).json({ error: 'Prohibido: No tienes permisos de servicio' });
+  // }
 
   // **Punto Clave 1: Obtener datos del Request**
   // El TS nos envía el ID de la TX original y el ID de esta nueva TX de compensación

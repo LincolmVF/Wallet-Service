@@ -52,6 +52,7 @@ const LEDGER_TABLE_SQL = `
 CREATE TABLE IF NOT EXISTS Ledger (
     ledger_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     wallet_id INT NOT NULL,
+    counterparty_id VARCHAR(255) NULL,
     
     -- Este es tu 'externalTransactionId' que usamos en los mocks.
     -- Es un 'ID fantasma' del Transaction Service.

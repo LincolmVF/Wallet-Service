@@ -138,7 +138,7 @@ const getBalanceByUserId = async (userId) => {
  * @param {string} externalTransactionId - El ID de la SAGA (RF6)
  * @returns {object} El nuevo estado de la wallet
  */
-const credit = async (walletId, amount, externalTransactionId) => {
+const credit = async (walletId, amount, externalTransactionId, counterpartyId, currency) => {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -167,6 +167,12 @@ const credit = async (walletId, amount, externalTransactionId) => {
       throw new Error(`Wallet con id ${walletId} no encontrada.`);
     }
     const wallet = wallets[0];
+
+    // Validar Moneda
+    if (currency && currency !== wallet.currency) {
+      throw new Error(`Moneda incorrecta. La wallet es ${wallet.currency} pero se intentó acreditar ${currency}.`);
+    }
+
     const balanceBefore = parseFloat(wallet.balance);
 
     // **Punto Clave 4: Ejecutar la Lógica**
@@ -179,11 +185,12 @@ const credit = async (walletId, amount, externalTransactionId) => {
     // 2. Registrar en el Ledger
     const ledgerSql = `
             INSERT INTO Ledger 
-            (wallet_id, external_transaction_id, type, amount, balance_before, balance_after, status) 
-            VALUES (?, ?, 'CREDIT', ?, ?, ?, 'COMPLETED')
+            (wallet_id, counterparty_id, external_transaction_id, type, amount, balance_before, balance_after, status) 
+            VALUES (?, ?, ?, 'CREDIT', ?, ?, ?, 'COMPLETED')
         `;
     await conn.query(ledgerSql, [
       walletId,
+      counterpartyId,
       externalTransactionId,
       amount,
       balanceBefore,
@@ -217,7 +224,7 @@ const credit = async (walletId, amount, externalTransactionId) => {
  * @param {string} externalTransactionId - El ID de la SAGA (RF6)
  * @returns {object} El nuevo estado de la wallet
  */
-const debit = async (walletId, amount, externalTransactionId) => {
+const debit = async (walletId, amount, externalTransactionId, counterpartyId, currency) => {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -242,6 +249,12 @@ const debit = async (walletId, amount, externalTransactionId) => {
       throw new Error(`Wallet con id ${walletId} no encontrada.`);
     }
     const wallet = wallets[0];
+
+    // Validar Moneda
+    if (currency && currency !== wallet.currency) {
+      throw new Error(`Moneda incorrecta. La wallet es ${wallet.currency} pero se intentó debitar ${currency}.`);
+    }
+
     const balanceBefore = parseFloat(wallet.balance);
 
     // **Punto Clave 4: Regla de Negocio (RF5: Fondos Insuficientes)**
@@ -262,11 +275,12 @@ const debit = async (walletId, amount, externalTransactionId) => {
     // 7. Registrar en Ledger
     const ledgerSql = `
             INSERT INTO Ledger 
-            (wallet_id, external_transaction_id, type, amount, balance_before, balance_after, status) 
-            VALUES (?, ?, 'DEBIT', ?, ?, ?, 'COMPLETED')
+            (wallet_id, counterparty_id, external_transaction_id, type, amount, balance_before, balance_after, status) 
+            VALUES (?, ?, ?, 'DEBIT', ?, ?, ?, 'COMPLETED')
         `;
     await conn.query(ledgerSql, [
       walletId,
+      counterpartyId,
       externalTransactionId,
       amount,
       balanceBefore,
@@ -421,12 +435,13 @@ const compensate = async (
     // 6. Registrar la compensación en el Ledger
     const ledgerSql = `
             INSERT INTO Ledger 
-            (wallet_id, external_transaction_id, original_tx_id, type, amount, balance_before, balance_after, status, description) 
-            VALUES (?, ?, ?, 'COMPENSATION', ?, ?, ?, 'COMPLETED', ?)
+            (wallet_id, counterparty_id, external_transaction_id, original_tx_id, type, amount, balance_before, balance_after, status, description) 
+            VALUES (?, ?, ?, ?, 'COMPENSATION', ?, ?, ?, 'COMPLETED', ?)
         `;
     const description = `Compensación de ${originalTx.type} (TX: ${originalTx.external_transaction_id})`;
     const insertResult = await conn.query(ledgerSql, [
       wallet.wallet_id,
+      originalTx.counterparty_id,
       compensationTransactionId,
       originalExternalTransactionId,
       amountToCompensate,

@@ -7,42 +7,6 @@ const walletController = require("../controllers/wallet.controller");
 
 const { checkJwt } = require('../middleware/auth.middleware');
 
-
-
-//¡NUEVO! IMPORTA ESTO PARA LA PUERTA TRASERA ---
-const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Asegura que process.env esté cargado
-const JWT_SECRET = process.env.JWT_SECRET;
-
-//¡NUEVO! Pega esta ruta aquí ---
-//==================================================================
-// 		PUERTA TRASERA DE PRUEBAS (¡Borrar en producción!)
-//==================================================================
-router.post('/generate-token', (req, res) => {
-  try {
-    const { userId, role } = req.body;
-    if (!userId || !role) {
-      return res.status(400).json({ error: "Se requiere 'userId' y 'role' en el body" });
-    }
-
-    const payload = { userId, role };
-
-    // ¡Firmamos el token con el MISMO secreto que usa el middleware!
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
-
-    res.status(200).json({
-      message: `Token generado para ${role}: ${userId}`,
-      token: token,
-      payload: payload
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
 // --- Definición de Endpoints de Wallet ---
 
 // Ruta de prueba (la dejamos)
